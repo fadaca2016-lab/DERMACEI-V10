@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. ESTÉTICA PROFESIONAL CEI (Minimalismo Rosa)
+# 1. ESTÉTICA PROFESIONAL CEI
 st.set_page_config(page_title="Derma CEI v10", layout="centered")
 
 st.markdown("""
@@ -20,14 +20,14 @@ st.markdown("""
 st.markdown("<h1>CEI - Centro de Estética Integral</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #ad1457;'>Escáner de Piel Inteligente v10.4</p>", unsafe_allow_html=True)
 
-# 2. CONEXIÓN TÉCNICA (Compatible con Gemini 1.5 y 3.1)
+# 2. CONEXIÓN TÉCNICA (Ajustada para Fabio)
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        # 'gemini-1.5-flash-latest' es la llave maestra para los modelos nuevos
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # Usamos el nombre base para máxima compatibilidad
+        model = genai.GenerativeModel('gemini-1.5-flash')
     else:
-        st.warning("⚠️ Fabio, configurá la nueva API KEY en los Secrets de Streamlit.")
+        st.warning("⚠️ Configurá la nueva API KEY en los Secrets de Streamlit.")
 except Exception as e:
     st.error(f"Error de configuración: {e}")
 
@@ -41,7 +41,7 @@ if opcion == "Cámara del móvil":
 else:
     foto = st.file_uploader("Seleccioná la imagen de la galería", type=['jpg', 'png', 'jpeg'])
 
-# 4. PROCESAMIENTO Y ANÁLISIS DEL CEI
+# 4. ANÁLISIS TÉCNICO
 if foto:
     img = Image.open(foto)
     if opcion == "Subir foto de galería":
@@ -50,13 +50,13 @@ if foto:
     if st.button("🚀 INICIAR DIAGNÓSTICO PROFESIONAL"):
         with st.spinner("Analizando tejido con tecnología Gemini..."):
             try:
-                # Prompt con el enfoque pedagógico de Fabio
+                # El prompt con el enfoque del CEI (Principios activos > Marcas)
                 prompt = (
                     "Actúa como un experto cosmetólogo del CEI. "
                     "Analiza minuciosamente la piel en esta imagen y determina: "
                     "1. Biotipo cutáneo (Eudérmica, Grasa, Seca, Mixta). "
                     "2. Mapa de lesiones (Comedones, pápulas, pústulas). "
-                    "3. Sugerencia de protocolo técnico sin mencionar marcas comerciales."
+                    "3. Sugerencia de protocolo técnico (ej. electroporación) sin mencionar marcas comerciales."
                 )
                 
                 response = model.generate_content([prompt, img])
@@ -68,8 +68,7 @@ if foto:
                 
             except Exception as e:
                 st.error(f"Falla en el motor de IA: {e}")
-                st.info("Asegurate de que la API KEY sea la correcta para el modelo Flash.")
+                st.info("Fabio, revisá que la API KEY sea la que generaste recién para Gemini Flash.")
 
-# PIE DE PÁGINA
 st.markdown("---")
-st.caption("Sistema de Diagnóstico Digital | Desarrollado por Fabio para CEI")
+st.caption("Desarrollado por Fabio para CEI")
