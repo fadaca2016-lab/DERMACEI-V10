@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. ESTÉTICA CEI (Fondo Rosa y Minimalismo)
+# 1. ESTÉTICA CEI
 st.set_page_config(page_title="Derma CEI v10", layout="centered")
 
 st.markdown("""
@@ -12,64 +12,48 @@ st.markdown("""
         background-color: #ff69b4; color: white; 
         border-radius: 20px; width: 100%; border: none; font-weight: bold;
     }
-    h1 { color: #d81b60; text-align: center; font-family: 'Helvetica', sans-serif; }
+    h1 { color: #d81b60; text-align: center; }
     .stRadio > label { color: #ad1457; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
 st.markdown("<h1>CEI - Centro de Estética Integral</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #ad1457;'>Escáner de Piel Profesional v10.2</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #ad1457;'>Escáner Profesional v10.2</p>", unsafe_allow_html=True)
 
-# 2. CONFIGURACIÓN DEL MOTOR (Con bypass de errores)
+# 2. CONEXIÓN (La clave para evitar el error de la imagen 7668fc.png)
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
-    
-    # Intentamos con el nombre más directo para evitar el error de la imagen 767462.jpg
+    # Usamos la versión más estable para el diagnóstico de piel
     model = genai.GenerativeModel('gemini-1.5-flash')
 except:
-    st.error("Revisá la API Key en los Secrets.")
+    st.error("Error en Secrets. Revisá la llave.")
 
-# 3. INTERFAZ DE CARGA
+# 3. INTERFAZ
 st.markdown("---")
-opcion = st.radio("¿Cómo querés cargar la imagen?", ["Cámara del móvil", "Subir foto de galería"], horizontal=True)
+opcion = st.radio("Fuente de imagen:", ["Cámara del móvil", "Subir foto de galería"], horizontal=True)
 
 foto = None
 if opcion == "Cámara del móvil":
-    foto = st.camera_input("Capturá la zona a analizar")
+    foto = st.camera_input("Capturá la zona")
 else:
-    foto = st.file_uploader("Seleccioná la imagen", type=['jpg', 'png', 'jpeg'])
+    foto = st.file_uploader("Seleccioná el archivo", type=['jpg', 'png', 'jpeg'])
 
-# 4. ANÁLISIS TÉCNICO
+# 4. ANÁLISIS
 if foto:
     img = Image.open(foto)
     if opcion == "Subir foto de galería":
-        st.image(img, width=400, caption="Imagen lista para el CEI")
+        st.image(img, width=400)
     
     if st.button("🚀 INICIAR DIAGNÓSTICO PROFESIONAL"):
-        with st.spinner("Analizando tejido..."):
-            # El prompt de Fabio para sus clases
-            prompt = (
-                "Actúa como experto cosmetólogo del CEI. "
-                "Analiza la piel en la imagen y determina: "
-                "1. Biotipo cutáneo. 2. Mapa de lesiones. "
-                "3. Sugerencia de protocolo técnico (ej. electroporación) sin marcas."
-            )
-            
+        with st.spinner("Analizando para el CEI..."):
             try:
-                # Intento 1: Motor Flash (el rápido)
+                prompt = "Actúa como experto cosmetólogo del CEI. Determina Biotipo y lesiones (comedones, pápulas, pústulas)."
                 response = model.generate_content([prompt, img])
-                st.markdown("### 📊 Informe Técnico del CEI")
+                st.markdown("### 📊 Informe Técnico")
                 st.write(response.text)
             except Exception as e:
-                # Si falla el primero (como en la imagen 767462.jpg), saltamos al Pro
-                try:
-                    model_alt = genai.GenerativeModel('gemini-pro-vision')
-                    response = model_alt.generate_content([prompt, img])
-                    st.write(response.text)
-                except Exception as e2:
-                    st.error(f"Error persistente en Google: {e2}")
-                    st.info("Fabio, esto es un problema de Google. Intentá un 'Reboot' en Manage App.")
+                st.error(f"Falla en el motor de IA: {e}")
 
 st.markdown("---")
 st.caption("Desarrollado por Fabio para CEI")
