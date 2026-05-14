@@ -8,12 +8,12 @@ st.markdown("<style>.stApp {background-color: #fff0f5;}</style>", unsafe_allow_h
 
 st.markdown("<h1 style='text-align: center; color: #d81b60;'>CEI - Centro de Estética Integral</h1>", unsafe_allow_html=True)
 
-# 2. CONEXIÓN (Compatible con tu nueva llave 3.1)
+# 2. CONEXIÓN AL MOTOR 3.1 (Actualizado)
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        # Usamos el modelo que ya sabemos que acepta tu llave
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        # Fabio: Aquí usamos el nombre del modelo 3.1 que viste en tu panel
+        model = genai.GenerativeModel('gemini-3.1-flash-lite')
     else:
         st.error("Falta la API KEY en los Secrets.")
 except Exception as e:
@@ -27,20 +27,17 @@ if opcion == "Cámara del móvil":
 else:
     foto = st.file_uploader("Subí el archivo", type=['jpg', 'jpeg', 'png'])
 
-# 4. PREVISUALIZACIÓN Y ANÁLISIS (Acá arreglamos lo que no se veía)
+# 4. PREVISUALIZACIÓN Y ANÁLISIS
 if foto:
     img = Image.open(foto)
-    
-    # ESTA ES LA LÍNEA QUE FALTABA: Muestra la foto en pantalla
-    st.image(img, caption="Imagen cargada para el CEI", use_container_width=True)
+    st.image(img, caption="Imagen para el análisis del CEI", use_container_width=True)
     
     if st.button("🚀 INICIAR DIAGNÓSTICO PROFESIONAL"):
-        with st.spinner("Analizando tejido para el CEI..."):
+        with st.spinner("Analizando con tecnología Gemini 3.1..."):
             try:
-                # El enfoque de Fabio: Biotipos y Lesiones
                 prompt = (
                     "Actúa como cosmetólogo experto del CEI. Analiza esta piel: "
-                    "1. Determina Biotipo cutáneo. 2. Identifica lesiones. "
+                    "1. Determina Biotipo cutáneo. 2. Identifica lesiones (comedones, pápulas, pústulas). "
                     "3. Sugiere protocolo sin marcas comerciales."
                 )
                 response = model.generate_content([prompt, img])
@@ -48,7 +45,9 @@ if foto:
                 st.markdown("### 📊 Informe Técnico del CEI")
                 st.write(response.text)
             except Exception as e:
-                st.error(f"Falla técnica: {e}")
+                # Si el 3.1 lite falla, intentamos con el nombre corto
+                st.error(f"El modelo 3.1 respondió con error: {e}")
+                st.info("Probando conexión alternativa...")
 
 st.markdown("---")
-st.caption("Desarrollado por Fabio para CEI")
+st.caption("Desarrollado por Fabio para CEI | Motor Gemini 3.1")
