@@ -1,9 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import os
 
 # 1. ESTÉTICA PROFESIONAL CEI
-st.set_page_config(page_title="Derma CEI v11.9", layout="centered")
+st.set_page_config(page_title="Derma CEI v12.0", layout="centered")
 
 st.markdown("""
     <style>
@@ -17,15 +18,22 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Encabezado con Logo
+# --- ARREGLO DEL LOGO (BLINDAJE TÉCNICO) ---
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    try:
-        # Usamos el logo que subiste
-        logo = Image.open("logo 2.jpg")
-        st.image(logo, use_container_width=True)
-    except:
-        st.markdown("<h1>CEI</h1>", unsafe_allow_html=True)
+    # Fabio, acá el código busca el archivo de varias formas por si GitHub le cambió el nombre
+    nombres_logo = ["logo 2.jpg", "logo_2.jpg", "logo2.jpg", "LOGO 2.JPG"]
+    logo_final = None
+    for n in nombres_logo:
+        if os.path.exists(n):
+            logo_final = n
+            break
+    
+    if logo_final:
+        st.image(logo_final, use_container_width=True)
+    else:
+        # Si no lo encuentra, ponemos un banner elegante para que no quede vacío
+        st.markdown("<h2 style='text-align: center; color: #d81b60;'>CEI</h2>", unsafe_allow_html=True)
 
 st.markdown("<h1>Centro de Estética Integral</h1>", unsafe_allow_html=True)
 
@@ -33,24 +41,25 @@ st.markdown("<h1>Centro de Estética Integral</h1>", unsafe_allow_html=True)
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        # Usamos 1.5 Flash para que el radar de precios sea veloz
         model = genai.GenerativeModel(
             model_name='gemini-1.5-flash',
             tools=[{'google_search_retrieval': {}}] 
         )
     else:
-        st.warning("⚠️ Falta API KEY en Secrets.")
+        st.warning("⚠️ Falta API KEY en los Secrets de Streamlit.")
 except Exception as e:
-    st.error(f"Error técnico: {e}")
+    st.error(f"Error de conexión: {e}")
 
 st.markdown("---")
 
 # 3. INTERFAZ DUAL
-modo = st.sidebar.radio("Seleccionar Misión:", ["Escáner de Piel (Rostro)", "Inspector de Producto (Foto/Barcode)"])
+modo = st.sidebar.radio("Seleccionar Misión:", ["Escáner de Piel (Rostro)", "Inspector de Producto (Precios/INCI)"])
 
 # --- MISIÓN 1: DIAGNÓSTICO DE PIEL ---
 if modo == "Escáner de Piel (Rostro)":
     st.markdown("<h2>Misión 1: Diagnóstico de Tejido</h2>", unsafe_allow_html=True)
-    foto_piel = st.camera_input("Capturá el rostro de la paciente")
+    foto_piel = st.camera_input("Capturá el rostro")
     
     if foto_piel:
         img_piel = Image.open(foto_piel)
@@ -65,19 +74,18 @@ if modo == "Escáner de Piel (Rostro)":
                     st.error(f"Falla: {e}")
             
             st.markdown("---")
-            with st.expander("👁️ Zona de Experto: Ver Protocolo Sugerido"):
-                st.info("⚠️ Esta sección requiere autorización de Olga.")
+            with st.expander("👁️ Ver Protocolo (Contraseña de Olga)"):
                 pw = st.text_input("Clave de experto:", type="password")
                 if pw == "Olga123":
-                    res_pax = model.generate_content(["Sugiere un protocolo basado en activos (INCI) para esta piel.", img_piel])
+                    res_pax = model.generate_content(["Sugiere protocolo basado en activos (INCI) para esta piel.", img_piel])
                     st.write(res_pax.text)
                 elif pw:
                     st.error("Acceso denegado.")
 
-# --- MISIÓN 2: INSPECTOR DE PRODUCTO (LO QUE AGREGAMOS RECIÉN) ---
+# --- MISIÓN 2: INSPECTOR DE PRODUCTO (CÓDIGO DE BARRAS Y PRECIOS) ---
 else:
     st.markdown("<h2>🕵️ Inspector de Producto e INCI</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #ad1457;'>Enfocá bien el código de barras o la marca</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #ad1457;'>Enfocá el código de barras o el frente del envase</p>", unsafe_allow_html=True)
     
     foto_prod = st.camera_input("Escaneá el producto")
     
@@ -85,23 +93,22 @@ else:
         img_prod = Image.open(foto_prod)
         st.image(img_prod, width=300, caption="Producto detectado")
         
-        if st.button("🔍 EJECUTAR AUDITORÍA TOTAL"):
-            with st.spinner("Decodificando código y buscando precios..."):
+        if st.button("🔍 AUDITORÍA TOTAL (INCI + PRECIO)"):
+            with st.spinner("Rastreando código y precios en Argentina..."):
                 try:
                     prompt_prod = (
-                        "Analiza minuciosamente este producto cosmético de la imagen: "
-                        "1. LECTURA DE CÓDIGO: Lee el código de barras (EAN/UPC) si es visible. "
-                        "2. IDENTIFICACIÓN: Nombre exacto del producto y marca. "
-                        "3. ANÁLISIS TÉCNICO: Detalla los principios activos (INCI) y su función. "
-                        "4. PRECIO EN ARGENTINA: Busca el precio actual aproximado en el mercado local. "
-                        "5. VEREDICTO CEI: ¿Es un producto apto para nivel profesional o uso hogareño?"
+                        "Analiza esta imagen de producto cosmético: "
+                        "1. LECTURA ÓPTICA: Identifica código de barras (EAN/UPC) o nombre exacto. "
+                        "2. ANÁLISIS INCI: Detalla activos principales y función. "
+                        "3. RADAR DE PRECIOS: Busca el precio actual aproximado en pesos argentinos (Mercado Libre/Farmacias). "
+                        "4. VEREDICTO: ¿Es apto para uso profesional en el CEI o es de uso masivo?"
                     )
                     response_prod = model.generate_content([prompt_prod, img_prod])
                     st.markdown("---")
-                    st.markdown("### 📋 Informe de Auditoría")
+                    st.markdown("### 📋 Informe de Auditoría de Mercado")
                     st.write(response_prod.text)
                 except Exception as e:
                     st.error(f"Falla en el rastreo: {e}")
 
 st.markdown("---")
-st.caption("v11.9 - Sistema de Inteligencia CEI | Fabio & Olga")
+st.caption("v12.0 - CEI Intelligence System | Fabio & Olga")
