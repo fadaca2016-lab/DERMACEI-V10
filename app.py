@@ -2,8 +2,8 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. ESTÉTICA CEI PREMIUM
-st.set_page_config(page_title="Derma CEI v11.8", layout="centered")
+# 1. ESTÉTICA PROFESIONAL CEI
+st.set_page_config(page_title="Derma CEI v11.9", layout="centered")
 
 st.markdown("""
     <style>
@@ -17,16 +17,19 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Encabezado
+# Encabezado con Logo
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     try:
+        # Usamos el logo que subiste
         logo = Image.open("logo 2.jpg")
         st.image(logo, use_container_width=True)
     except:
         st.markdown("<h1>CEI</h1>", unsafe_allow_html=True)
 
-# 2. CONEXIÓN TÉCNICA (Búsqueda Web Habilitada)
+st.markdown("<h1>Centro de Estética Integral</h1>", unsafe_allow_html=True)
+
+# 2. CONEXIÓN TÉCNICA (Con Búsqueda Web para Precios)
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -41,52 +44,64 @@ except Exception as e:
 
 st.markdown("---")
 
-# 3. INTERFAZ
-modo = st.sidebar.radio("Misión:", ["Escáner de Piel", "Inspector de Producto (Foto/Barcode)"])
+# 3. INTERFAZ DUAL
+modo = st.sidebar.radio("Seleccionar Misión:", ["Escáner de Piel (Rostro)", "Inspector de Producto (Foto/Barcode)"])
 
-if modo == "Escáner de Piel":
-    # ... (Mantenemos el bloque de piel igual para no romper lo que ya aprobó la jefa)
-    st.markdown("<h2>Diagnóstico de Piel</h2>", unsafe_allow_html=True)
-    foto_piel = st.camera_input("Rostro")
+# --- MISIÓN 1: DIAGNÓSTICO DE PIEL ---
+if modo == "Escáner de Piel (Rostro)":
+    st.markdown("<h2>Misión 1: Diagnóstico de Tejido</h2>", unsafe_allow_html=True)
+    foto_piel = st.camera_input("Capturá el rostro de la paciente")
+    
     if foto_piel:
         img_piel = Image.open(foto_piel)
         if st.button("🚀 INICIAR DIAGNÓSTICO"):
-            res_piel = model.generate_content(["Analiza biotipo y lesiones.", img_piel])
-            st.write(res_piel.text)
+            with st.spinner("Analizando para el CEI..."):
+                try:
+                    prompt_piel = "Actúa como experto del CEI. Analiza esta piel: Biotipo y Lesiones. NO sugieras protocolos."
+                    res_piel = model.generate_content([prompt_piel, img_piel])
+                    st.markdown("### 📊 Informe Técnico")
+                    st.write(res_piel.text)
+                except Exception as e:
+                    st.error(f"Falla: {e}")
             
-        with st.expander("👁️ Protocolo Oculto"):
-            pw = st.text_input("Clave:", type="password")
-            if pw == "Olga123":
-                res_pax = model.generate_content(["Protocolo INCI.", img_piel])
-                st.write(res_pax.text)
+            st.markdown("---")
+            with st.expander("👁️ Zona de Experto: Ver Protocolo Sugerido"):
+                st.info("⚠️ Esta sección requiere autorización de Olga.")
+                pw = st.text_input("Clave de experto:", type="password")
+                if pw == "Olga123":
+                    res_pax = model.generate_content(["Sugiere un protocolo basado en activos (INCI) para esta piel.", img_piel])
+                    st.write(res_pax.text)
+                elif pw:
+                    st.error("Acceso denegado.")
 
-# NUEVA MISIÓN: INSPECTOR CON LECTURA DE CÓDIGO
+# --- MISIÓN 2: INSPECTOR DE PRODUCTO (LO QUE AGREGAMOS RECIÉN) ---
 else:
     st.markdown("<h2>🕵️ Inspector de Producto e INCI</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #ad1457;'>Sacale al frente, al INCI o al Código de Barras</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #ad1457;'>Enfocá bien el código de barras o la marca</p>", unsafe_allow_html=True)
     
     foto_prod = st.camera_input("Escaneá el producto")
     
     if foto_prod:
         img_prod = Image.open(foto_prod)
-        st.image(img_prod, width=300)
+        st.image(img_prod, width=300, caption="Producto detectado")
         
-        if st.button("🔍 AUDITORÍA TOTAL"):
-            with st.spinner("Leyendo código de barras y analizando mercado..."):
+        if st.button("🔍 EJECUTAR AUDITORÍA TOTAL"):
+            with st.spinner("Decodificando código y buscando precios..."):
                 try:
                     prompt_prod = (
-                        "Analiza minuciosamente la imagen de este producto cosmético: "
-                        "1. CÓDIGO DE BARRAS: Si ves un código de barras o números EAN/UPC, leelos y usalos para identificar el producto exacto. "
-                        "2. IDENTIFICACIÓN: Nombre, marca y procedencia. "
-                        "3. ANÁLISIS INCI: Desglose de activos y seguridad química. "
-                        "4. PRECIO EN ARGENTINA: Buscá el precio actual en Mercado Libre o farmacias locales. "
-                        "5. VEREDICTO: ¿Es apto para el uso profesional en el CEI?"
+                        "Analiza minuciosamente este producto cosmético de la imagen: "
+                        "1. LECTURA DE CÓDIGO: Lee el código de barras (EAN/UPC) si es visible. "
+                        "2. IDENTIFICACIÓN: Nombre exacto del producto y marca. "
+                        "3. ANÁLISIS TÉCNICO: Detalla los principios activos (INCI) y su función. "
+                        "4. PRECIO EN ARGENTINA: Busca el precio actual aproximado en el mercado local. "
+                        "5. VEREDICTO CEI: ¿Es un producto apto para nivel profesional o uso hogareño?"
                     )
                     response_prod = model.generate_content([prompt_prod, img_prod])
+                    st.markdown("---")
                     st.markdown("### 📋 Informe de Auditoría")
                     st.write(response_prod.text)
                 except Exception as e:
-                    st.error(f"Falla en la lectura: {e}")
+                    st.error(f"Falla en el rastreo: {e}")
 
 st.markdown("---")
-st.caption("v11.8 - Lector Óptico de Barcode & INCI | Fabio para CEI")
+st.caption("v11.9 - Sistema de Inteligencia CEI | Fabio & Olga")
